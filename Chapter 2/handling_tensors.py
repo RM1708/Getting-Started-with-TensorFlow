@@ -7,9 +7,9 @@ filename = "packt.jpeg"
 input_image = mp_image.imread(filename)
 
 #dimension
-print 'input dim = {}'.format(input_image.ndim)
+print ('input dim = {}'.format(input_image.ndim))
 #shape
-print 'input shape = {}'.format(input_image.shape)
+print ('input shape = {}'.format(input_image.shape))
 
 import matplotlib.pyplot as plt
 plt.imshow(input_image)
