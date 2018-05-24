@@ -2,6 +2,12 @@ tmp.*
 *.pdf
 git_diff.txt
 
+*/.ipynb_checkpoints/
+
+*.html
+
+*.csv
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

@@ -36,7 +36,8 @@ with tf.Session() as session:
     session.run(init_vars)
     result=session.run(x_transpose)
     SliceOfInputImage = (session.run(x))[ 2, : 20, :]
-    print("Slice of tensor x[ 2, : 20, :] from within session: ", SliceOfInputImage)
+    print("Slice of tensor x[ 2, : 20, :] from within session: ", \
+          SliceOfInputImage)
 
 print("\nSlice of tensor x[ 2, : 20, :] from outside session: ", \
       SliceOfInputImage)
