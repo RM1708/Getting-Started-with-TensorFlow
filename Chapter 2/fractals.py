@@ -52,7 +52,8 @@ try:
     #        print("\ni: {}; ns: {}".format(i, (ns.eval()).imag))
     #        print("i: {}; c: {}".format(i, c.eval()))
     #        print("\i: {}; The tensor zs:\n{}".format(i, zs.eval()))
-        if(tf.logical_not(not_diverged)):
+#        if(tf.logical_not(sess.run(not_diverged))):
+        if(not (sess.run(not_diverged)).any):
             print("\nDiverged at i = {}, ".format(i))
             
     print("\n ns:\n {}".format((ns.eval())[5:10, :]))      

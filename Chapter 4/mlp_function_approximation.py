@@ -67,7 +67,7 @@ for i in range(NUM_EPOCHS):
     cost = sess.run(tf.nn.l2_loss(model - y_validation),\
                     feed_dict={X:x_validation})
     errors.append(cost)
-    if i%100 == 0: print "epoch %d, cost = %g" % (i, cost)
+    if i%100 == 0: print ("epoch %d, cost = %g" % (i, cost))
 
 plt.plot(errors,label='MLP Function Approximation')
 plt.xlabel('epochs')

@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 # 0 and standard deviation 2.
 norm = tf.random_normal([100], mean=0, stddev=2)
 with tf.Session() as session:
-    plt.hist(norm.eval(),normed=True)
+    plt.hist(norm.eval(),density=True)
     plt.show()  
 
 
 uniform = tf.random_uniform([100],minval=0,maxval=1,dtype=tf.float32)
 with tf.Session() as session:
-    print uniform.eval()
-    plt.hist(uniform.eval(),normed=True)
+    print (uniform.eval())
+    plt.hist(uniform.eval(),density=True)
     plt.show() 
 
 
@@ -32,7 +32,7 @@ with tf.Session() as first_session:
   print("uniform without seed = {}"\
         .format(first_session.run(uniform_without_seed)))  
 
-print("Second Run")
+print("\nSecond Run")
 with tf.Session() as second_session:
   print("uniform with (seed = 1) = {}"\
         .format(second_session.run(uniform_with_seed)))  
@@ -46,7 +46,7 @@ with tf.Session() as second_session:
 
 
 import tensorflow as tf
-
+print("\nNow Recursively Computing PI")
 trials = 100
 hits = 0
 x = tf.random_uniform([1],minval=-1,maxval=1,dtype=tf.float32)

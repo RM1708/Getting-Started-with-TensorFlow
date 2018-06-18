@@ -23,7 +23,8 @@ import os.path
 
 import tensorflow as tf
 
-from tensorflow.models.rnn.ptb import reader
+#from tensorflow.models.rnn.ptb import reader
+from rnn.ptb import reader
 
 
 class PtbReaderTest(tf.test.TestCase):
