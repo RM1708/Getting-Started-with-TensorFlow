@@ -15,6 +15,7 @@ def maybe_download(filename, work_directory):
     statinfo = os.stat(filepath)
     print('Succesfully downloaded', filename, statinfo.st_size, 'bytes.')
   return filepath
+
 def _read32(bytestream):
   dt = numpy.dtype(numpy.uint32).newbyteorder('>')
   return numpy.frombuffer(bytestream.read(4), dtype=dt)[0] #"https://stackoverflow.com/questions/42128830/" + \
@@ -35,6 +36,7 @@ def extract_images(filename):
     data = numpy.frombuffer(buf, dtype=numpy.uint8)
     data = data.reshape(num_images, rows, cols, 1)
     return data
+
 def dense_to_one_hot(labels_dense, num_classes=10):
   """Convert class labels from scalars to one-hot vectors."""
   num_labels = labels_dense.shape[0]
@@ -42,6 +44,7 @@ def dense_to_one_hot(labels_dense, num_classes=10):
   labels_one_hot = numpy.zeros((num_labels, num_classes))
   labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
   return labels_one_hot
+
 def extract_labels(filename, one_hot=False):
   """Extract the labels into a 1D uint8 numpy array [index]."""
   print('Extracting', filename)
@@ -57,6 +60,7 @@ def extract_labels(filename, one_hot=False):
     if one_hot:
       return dense_to_one_hot(labels)
     return labels
+
 class DataSet(object):
   def __init__(self, images, labels, fake_data=False):
     if fake_data:
@@ -90,6 +94,7 @@ class DataSet(object):
   @property
   def epochs_completed(self):
     return self._epochs_completed
+
   def next_batch(self, batch_size, fake_data=False):
     """Return the next `batch_size` examples from this data set."""
     if fake_data:
@@ -113,20 +118,28 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
+  def reset_counts(self):
+      self._epochs_completed = 0
+      self._index_in_epoch = 0
+      
 def read_data_sets(train_dir, fake_data=False, one_hot=False):
   class DataSets(object):
     pass
+
   data_sets = DataSets()
   if fake_data:
     data_sets.train = DataSet([], [], fake_data=True)
     data_sets.validation = DataSet([], [], fake_data=True)
     data_sets.test = DataSet([], [], fake_data=True)
     return data_sets
+
   TRAIN_IMAGES = 'train-images-idx3-ubyte.gz'
   TRAIN_LABELS = 'train-labels-idx1-ubyte.gz'
   TEST_IMAGES = 't10k-images-idx3-ubyte.gz'
   TEST_LABELS = 't10k-labels-idx1-ubyte.gz'
+  
   VALIDATION_SIZE = 5000
+  
   local_file = maybe_download(TRAIN_IMAGES, train_dir)
   train_images = extract_images(local_file)
   local_file = maybe_download(TRAIN_LABELS, train_dir)
@@ -135,8 +148,10 @@ def read_data_sets(train_dir, fake_data=False, one_hot=False):
   test_images = extract_images(local_file)
   local_file = maybe_download(TEST_LABELS, train_dir)
   test_labels = extract_labels(local_file, one_hot=one_hot)
+  
   validation_images = train_images[:VALIDATION_SIZE]
   validation_labels = train_labels[:VALIDATION_SIZE]
+  
   train_images = train_images[VALIDATION_SIZE:]
   train_labels = train_labels[VALIDATION_SIZE:]
   data_sets.train = DataSet(train_images, train_labels)

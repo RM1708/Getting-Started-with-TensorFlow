@@ -1,8 +1,11 @@
+.gitignore
 tmp.*
 *.pdf
 git_diff.txt
 
 */.ipynb_checkpoints/
+
+*/__pycache__/*.pyc
 
 *.html
 
