@@ -219,7 +219,8 @@ init = tf.global_variables_initializer()
 
 # Parameter
 batch_size = 128
-#Checking shapes
+
+# CHECK SHAPES OF INTERMEDIATE STAGES (EDGES OF THE GRAPH)
 with tf.Session() as sess:
      sess.run(init)
      batch_xs, batch_ys = mnist.train.next_batch(batch_size)
@@ -232,6 +233,7 @@ with tf.Session() as sess:
      assert(28 == x1.shape[1] and \
             28 == x1.shape[2] and \
             1 == x1.shape[3])
+
 # Running _X was resulting in an Exception with the following calls to sess.run().
 # Not able to reproduce the problem. 
 # The check below check the shape of _X_Tensor.
