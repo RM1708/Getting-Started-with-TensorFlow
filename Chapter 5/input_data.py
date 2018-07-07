@@ -118,6 +118,7 @@ class DataSet(object):
       assert batch_size <= self._num_examples
     end = self._index_in_epoch
     return self._images[start:end], self._labels[start:end]
+
   def reset_counts(self):
       self._epochs_completed = 0
       self._index_in_epoch = 0

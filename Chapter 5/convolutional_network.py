@@ -100,11 +100,26 @@ This network will then be trained by gradient descent and the back propagation a
 """
 
 # Import MINST data
-import input_data
-mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
+#import input_data
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets('/home/rm/tmp/data/', one_hot=True)
 NoOfTrainingImages = mnist.train.num_examples
 
 import tensorflow as tf
+
+# =============================================================================
+#def conv2d(img, w, b):
+#    conv_result = tf.nn.conv2d(img, w, strides=[1, 1, 1, 1], padding='SAME')
+#    conv_result_with_bias = tf.nn.bias_add(conv_result, b)
+#    rect_out = tf.nn.relu(conv_result_with_bias)
+#    return(rect_out)
+
+def max_pool(img, k):
+    return tf.nn.max_pool(img, \
+                          ksize=[1, k, k, 1],\
+                          strides=[1, k, k, 1],\
+                          padding='SAME')
+# =============================================================================
 
 # Network Parameters
 n_input = 784 # MNIST data input (img shape: 28*28)
@@ -116,41 +131,50 @@ x = tf.placeholder(tf.float32, [None, n_input])
 y = tf.placeholder(tf.float32, [None, n_classes])
 keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
 
-# Create model
-def conv2d(img, w, b):
-    conv_result = tf.nn.conv2d(img, w, strides=[1, 1, 1, 1], padding='VALID')
-    conv_result_with_bias = tf.nn.bias_add(conv_result, b)
-    rect_out = tf.nn.relu(conv_result_with_bias)
-    return(rect_out)
 # =============================================================================
-#    return tf.nn.relu(tf.nn.bias_add\
-#                      (tf.nn.conv2d(img, w,\
-#                                    strides=[1, 1, 1, 1],\
-#                                    padding='VALID'),b))
-# 
+# CREATE MODEL
 # =============================================================================
-def max_pool(img, k):
-    return tf.nn.max_pool(img, \
-                          ksize=[1, k, k, 1],\
-                          strides=[1, k, k, 1],\
-                          padding='VALID')
 
-# Store layers weight & bias
+# Create variables for weights & biases of the layers
 # =============================================================================
 # the convolutional layer is composed of 32 feature maps.
 # See Getting Started with TensorFlow (Kindle Location 2124). 
 # =============================================================================
    
-wc1 = tf.Variable(tf.random_normal([5, 5, 1, 32])) # 5x5 conv, 1 input, 32 outputs
-wc2 = tf.Variable(tf.random_normal([5, 5, 32, 64])) # 5x5 conv, 32 inputs, 64 outputs
-wd1 = tf.Variable(tf.random_normal([4*4*64, 1024])) # fully connected, 7*7*64 inputs, 1024 outputs
-wout = tf.Variable(tf.random_normal([1024, n_classes])) # 1024 inputs, 10 outputs (class prediction)
+#wc1 = tf.Variable(tf.random_normal([5, 5, 1, 32])) # 5x5 conv, 1 input, 32 outputs
+#wc2 = tf.Variable(tf.random_normal([5, 5, 32, 64])) # 5x5 conv, 32 inputs, 64 outputs
+##wd1 = tf.Variable(tf.random_normal([4*4*64, 1024])) # fully connected, 7*7*64 inputs, 1024 outputs
+#wd1 = tf.Variable(tf.random_normal([7*7*64, 1024])) # fully connected, 7*7*64 inputs, 1024 outputs
+#                                        #7*7 needed as now switched padding to
+#                                        #'SAME'
+#wout = tf.Variable(tf.random_normal([1024, n_classes])) # 1024 inputs, 10 outputs (class prediction)
 
+wc1 = tf.Variable(tf.truncated_normal([5, 5, 1, 32], stddev=0.1)) # 5x5 conv, 1 input, 32 outputs
+wc2 = tf.Variable(tf.truncated_normal([5, 5, 32, 64], stddev=0.1)) # 5x5 conv, 32 inputs, 64 outputs
+#wd1 = tf.Variable(tf.random_normal([4*4*64, 1024])) # fully connected, 7*7*64 inputs, 1024 outputs
+wd1 = tf.Variable(tf.truncated_normal([7*7*64, 1024], stddev=0.1)) # fully connected, 7*7*64 inputs, 1024 outputs
+                                        #7*7 needed as now switched padding to
+                                        #'SAME'
+wout = tf.Variable(tf.truncated_normal([1024, n_classes], stddev=0.1)) # 1024 inputs, 10 outputs (class prediction)
 
-bc1 = tf.Variable(tf.random_normal([32]))
-bc2 = tf.Variable(tf.random_normal([64]))
-bd1 = tf.Variable(tf.random_normal([1024]))
-bout = tf.Variable(tf.random_normal([n_classes]))
+#replacing random_normal with truncated_normal and specifying the stddev 
+#improved the performance to resemble that of mnist_cnn.py.
+#The initialization is now as done in layers.py for mnist_cnn.py.
+#The change below further improves the performance
+
+#bc1 = tf.Variable(tf.random_normal([32]))
+#bc2 = tf.Variable(tf.random_normal([64]))
+#bd1 = tf.Variable(tf.random_normal([1024]))
+#bout = tf.Variable(tf.random_normal([n_classes]))
+
+initial = tf.constant(0.1, shape=[32])
+bc1 = tf.Variable(initial)
+initial = tf.constant(0.1, shape=[64])
+bc2 = tf.Variable(initial)
+initial = tf.constant(0.1, shape=[1024])
+bd1 = tf.Variable(initial)
+initial = tf.constant(0.1, shape=[n_classes])
+bout = tf.Variable(initial)
 
 
 # Construct model
@@ -162,10 +186,8 @@ _X_Tensor = tf.convert_to_tensor(_X, dtype=tf.float32 )
 # Convolution Layer1
 #conv_Layer1 = conv2d(_X,wc1,bc1)
 
-conv_result_1 = tf.nn.conv2d(_X, wc1, strides=[1, 1, 1, 1], padding='VALID')
-# Statement below Commented out as using _X does not appear to cause any problem.
-# See above
-#conv_result_1 = tf.nn.conv2d(_X_Tensor, wc1, strides=[1, 1, 1, 1], padding='VALID')
+conv_result_1 = tf.nn.conv2d(_X, wc1, strides=[1, 1, 1, 1], padding='SAME')
+#NOTE: Change to 'SAME' needed the asserts to be changed. That is expected
 
 conv_result_with_bias_1 = tf.nn.bias_add(conv_result_1, bc1)
 conv_Layer1 = tf.nn.relu(conv_result_with_bias_1)
@@ -173,63 +195,29 @@ conv_Layer1 = tf.nn.relu(conv_result_with_bias_1)
 # Max Pooling (down-sampling)
 pooled_layer1 = max_pool(conv_Layer1, k=2)
 
-#pooled_layer1 = tf.nn.max_pool(conv_Layer1, \
-#                                  ksize=[1, 2, 2, 1],\
-#                                  strides=[1, 2, 2, 1],\
-#                                  padding='VALID')
-
 # Apply Dropout
 Out_Layer1 = tf.nn.dropout(pooled_layer1,keep_prob)
 
-
-# Convolution Layer2
-#conv_Layer2 = conv2d(Out_Layer1,wc2,bc2)
-
-conv_result_2 = tf.nn.conv2d(Out_Layer1, wc2, strides=[1, 1, 1, 1], padding='VALID')
-conv_result_with_bias_2 = tf.nn.bias_add(conv_result_2, bc2)
-conv_Layer2 = tf.nn.relu(conv_result_with_bias_2)
-
-# Max Pooling (down-sampling)
-pooled_layer2 = max_pool(conv_Layer2, k=2)
-
-# Apply Dropout
-Out_layer2 = tf.nn.dropout(pooled_layer2, keep_prob)
-
-
-# Fully connected layer
-dense1 = tf.reshape(Out_layer2, [-1, wd1.get_shape().as_list()[0]]) # Reshape conv2 output to fit dense layer input
-activation_relu = tf.nn.relu(tf.add(tf.matmul(dense1, wd1),bd1)) # Relu activation
-Thinned_OP = tf.nn.dropout(activation_relu, keep_prob) # Apply Dropout
-
-# Output, class prediction
-pred = tf.add(tf.matmul(Thinned_OP, wout), bout)
-
-# Parameter
-learning_rate = 0.001
-# Define loss and optimizer
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=pred, labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-
-# Evaluate model
-correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+# =============================================================================
+# CHECK SHAPES OF INTERMEDIATE STAGES (EDGES OF THE GRAPH) OF THE FIRST LAYER
+# =============================================================================
 
 # Initializing the variables
 init = tf.global_variables_initializer()
 
 # Parameter
-batch_size = 128
+BATCH_SIZE = 128
 
-# CHECK SHAPES OF INTERMEDIATE STAGES (EDGES OF THE GRAPH)
 with tf.Session() as sess:
      sess.run(init)
-     batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+     batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
 
 #     print("x.shape: {}".format(x.shape))
 #     print("batch_xs.shape: {}".format(batch_xs.shape))
 # =============================================================================
 # _X = tf.reshape(x, shape=[-1, 28, 28, 1])
      x1 = sess.run(_X, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
+     assert(BATCH_SIZE == x1.shape[0])
      assert(28 == x1.shape[1] and \
             28 == x1.shape[2] and \
             1 == x1.shape[3])
@@ -245,89 +233,156 @@ with tf.Session() as sess:
 #
 # _X_Tensor = tf.convert_to_tensor(_X, dtype=tf.float32 )
      x1 = sess.run(_X_Tensor, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
+     assert(BATCH_SIZE == x1.shape[0])
      assert(28 == x1.shape[1] and \
             28 == x1.shape[2] and \
             1 == x1.shape[3])
 # =============================================================================
-#conv_result_1 = tf.nn.conv2d(_X, wc1, strides=[1, 1, 1, 1], padding='VALID')
+#conv_result_1 = tf.nn.conv2d(_X, wc1, strides=[1, 1, 1, 1], padding='SAME')
      x1 = sess.run(conv_result_1, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(24 == x1.shape[1] and \
-            24 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(28 == x1.shape[1] and \
+            28 == x1.shape[2] and \
             32 == x1.shape[3])
 # =============================================================================
 #conv_Layer1 = tf.nn.relu(conv_result_with_bias_1)
      x1 = sess.run(conv_Layer1, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(24 == x1.shape[1] and \
-            24 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(28 == x1.shape[1] and \
+            28 == x1.shape[2] and \
             32 == x1.shape[3])
 # =============================================================================
 #pooled_layer1 = tf.nn.max_pool(conv_Layer1, \
 #                                  ksize=[1, 2, 2, 1],\
 #                                  strides=[1, 2, 2, 1],\
-#                                  padding='VALID')
+#                                  padding='SAME')
      x1 = sess.run(pooled_layer1, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(12 == x1.shape[1] and \
-            12 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(14 == x1.shape[1] and \
+            14 == x1.shape[2] and \
             32 == x1.shape[3])
 # =============================================================================
 #Out_Layer1 = tf.nn.dropout(pooled_layer1,keep_prob)
+#This is after applying dropout. Since drop-out has been loaded as 1.0, 
+#the shape remains the same as the output
+#from the preceding node. 
      x1 = sess.run(Out_Layer1, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(12 == x1.shape[1] and \
-            12 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(14 == x1.shape[1] and \
+            14 == x1.shape[2] and \
             32 == x1.shape[3])
 # =============================================================================
-# 2nd Convolutional Layer
+     
+# NOW CONVOLUTION LAYER 2
+#conv_Layer2 = conv2d(Out_Layer1,wc2,bc2)
+
+conv_result_2 = tf.nn.conv2d(Out_Layer1, wc2, strides=[1, 1, 1, 1], padding='SAME')
+conv_result_with_bias_2 = tf.nn.bias_add(conv_result_2, bc2)
+conv_Layer2 = tf.nn.relu(conv_result_with_bias_2)
+
+# Max Pooling (down-sampling)
+pooled_layer2 = max_pool(conv_Layer2, k=2)
+
+# Apply Dropout
+Out_layer2 = tf.nn.dropout(pooled_layer2, keep_prob)
+
 # =============================================================================
+# CHECK SHAPES OF INTERMEDIATE STAGES (EDGES OF THE GRAPH) OF THE SECOND LAYER
+# =============================================================================
+#
+# Initializing the variables
+init = tf.global_variables_initializer()
+
+# Parameter
+BATCH_SIZE = 128
+
+with tf.Session() as sess:
+     sess.run(init)
+     batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
+
      x1 = sess.run(conv_result_2, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(8 == x1.shape[1] and \
-            8 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(14 == x1.shape[1] and \
+            14== x1.shape[2] and \
             64 == x1.shape[3])
 # =============================================================================
      x1 = sess.run(conv_Layer2, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(8 == x1.shape[1] and \
-            8 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(14 == x1.shape[1] and \
+            14 == x1.shape[2] and \
             64 == x1.shape[3])
 # =============================================================================
      x1 = sess.run(pooled_layer2, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(4 == x1.shape[1] and \
-            4 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(7 == x1.shape[1] and \
+            7 == x1.shape[2] and \
             64 == x1.shape[3])
 # =============================================================================
      x1 = sess.run(Out_layer2, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(4 == x1.shape[1] and \
-            4 == x1.shape[2] and \
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(7 == x1.shape[1] and \
+            7 == x1.shape[2] and \
             64 == x1.shape[3])
 # =============================================================================
-# Output
+
+# Fully connected layer
+dense1 = tf.reshape(Out_layer2, [-1, wd1.get_shape().as_list()[0]]) # Reshape conv2 output to fit dense layer input
+activation_relu = tf.nn.relu(tf.add(tf.matmul(dense1, wd1),bd1)) # Relu activation
+Thinned_OP = tf.nn.dropout(activation_relu, keep_prob) # Apply Dropout
+
+# Output, class prediction
+pred = tf.add(tf.matmul(Thinned_OP, wout), bout)
+
 # =============================================================================
+# CHECK SHAPES OF INTERMEDIATE STAGES (EDGES OF THE GRAPH) OF OUTPUT
+# =============================================================================
+
+# Initializing the variables
+init = tf.global_variables_initializer()
+
+# Parameter
+BATCH_SIZE = 128
+
+with tf.Session() as sess:
+     sess.run(init)
+     batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
+
      x1 = sess.run(dense1, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
-     assert(1024 == x1.shape[1])
+     assert(BATCH_SIZE == x1.shape[0])
+     assert(3136 == x1.shape[1])
 # =============================================================================
      x1 = sess.run(Thinned_OP, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
+     assert(BATCH_SIZE == x1.shape[0])
      assert(1024 == x1.shape[1])
 # =============================================================================
      x1 = sess.run(pred, feed_dict={x: batch_xs, y: batch_ys, keep_prob: 1.})
-     assert(128 == x1.shape[0])
+     assert(BATCH_SIZE == x1.shape[0])
      assert(10 == x1.shape[1])
 # =============================================================================
 
 mnist.train.reset_counts()
 
+# Parameter
+learning_rate = 1.0e-03  #0.001
+# Define loss and optimizer
+cost = tf.reduce_mean(\
+              tf.nn.softmax_cross_entropy_with_logits_v2(\
+                                             logits=pred, labels=y))
+optimizer = tf.train.AdamOptimizer(\
+               learning_rate=learning_rate).minimize(cost)
+
+# Evaluate model
+correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+
 # Parameters
-batch_size = 128
-display_step = 10
-training_iters = NoOfTrainingImages//batch_size
+BATCH_SIZE = 50
+display_step = 100
+training_iters = 5000 #NoOfTrainingImages//BATCH_SIZE
+
+# Initializing the variables
+init = tf.global_variables_initializer()
 
 # Launch the graph
 with tf.Session() as sess:
@@ -335,7 +390,7 @@ with tf.Session() as sess:
     iter = 0
     # Keep training until reach max iterations
     while iter  < training_iters:
-        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        batch_xs, batch_ys = mnist.train.next_batch(BATCH_SIZE)
         # Fit training using batch data
         sess.run(optimizer, feed_dict={x: batch_xs, y: batch_ys, keep_prob: dropout})
         if iter % display_step == 0:
@@ -348,5 +403,6 @@ with tf.Session() as sess:
         iter += 1
     print ("Optimization Finished! After iter: {}".format(iter))
     # Calculate accuracy for 256 mnist test images
-    print ("Testing Accuracy:", sess.run(accuracy, feed_dict={x: mnist.test.images[:256], y: mnist.test.labels[:256], keep_prob: 1.}))
+    print ("Testing Accuracy:", sess.run(accuracy, \
+                                         feed_dict={x: mnist.test.images[:256], y: mnist.test.labels[:256], keep_prob: 1.}))
 

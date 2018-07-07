@@ -7,7 +7,7 @@
 #Import libraries for simulation
 import tensorflow as tf
 import numpy as np
-from sympy import *
+#from sympy import *
 
 import matplotlib.pyplot as plt
 
@@ -79,9 +79,9 @@ ut_init = np.zeros([N, N], dtype=np.float32)
 #  a,b = np.random.randint(0, N, 2)
 #  u_init[a,b] = np.random.uniform(low=0, high=10)
 
-a = N/2; b = N/2
+a = N//2; b = N//2
 SideOfBrick = 20
-Delta_PlusMinus = int(SideOfBrick/2)
+Delta_PlusMinus = int(SideOfBrick//2)
 
 
 # In[ ]:

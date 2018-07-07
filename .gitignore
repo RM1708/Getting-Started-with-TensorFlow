@@ -1,4 +1,7 @@
 .gitignore
+*/tensorflowlogs/*
+Comparing_input_data_modules.txt
+
 tmp.*
 *.pdf
 git_diff.txt
