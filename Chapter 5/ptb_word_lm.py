@@ -128,10 +128,17 @@ class PTBModel(object):
     softmax_w = tf.get_variable("softmax_w", [size, vocab_size])
     softmax_b = tf.get_variable("softmax_b", [vocab_size])
     logits = tf.matmul(output, softmax_w) + softmax_b
+    ####################################################
+    #Taken from /home/rm/tensorflow_models/tutorials/rnn/ptb/ptb_word_lm.py
+    #
+    # Reshape logits to be a 3-D tensor for sequence loss
+    logits = tf.reshape(logits, [self.batch_size, self.num_steps, vocab_size])
+    #####################################################
     #loss = tf.nn.seq2seq.sequence_loss_by_example(
     #loss = tf.contrib.seq2seq.sequence_loss(
-    #loss = tf.contrib.seq2seq.sequence_loss([logits],[tf.reshape(self._targets, [-1])],[tf.ones([batch_size * num_steps])])
-    loss = tf.contrib.seq2seq.sequence_loss(logits,[tf.reshape(self._targets, [-1])],[tf.ones([batch_size * num_steps])])
+    loss = tf.contrib.seq2seq.sequence_loss(logits, \
+                                            [tf.reshape(self._targets, [-1])], \
+                                            [tf.ones([batch_size * num_steps])])
     self._cost = cost = tf.reduce_sum(loss) / batch_size
     self._final_state = state
 
