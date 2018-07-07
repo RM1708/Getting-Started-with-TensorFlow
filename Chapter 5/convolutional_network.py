@@ -365,9 +365,17 @@ mnist.train.reset_counts()
 # Parameter
 learning_rate = 1.0e-03  #0.001
 # Define loss and optimizer
-cost = tf.reduce_mean(\
-              tf.nn.softmax_cross_entropy_with_logits_v2(\
-                                             logits=pred, labels=y))
+#cost = tf.reduce_mean(\
+#              tf.nn.softmax_cross_entropy_with_logits_v2(\
+#                                             logits=pred, labels=y))
+
+#See foot notes 5 Learning TensorFlow: A Guide to Building Deep Learning Systems
+# (Kindle Locations 516-518)
+#"As of TensorFlow 1.0 this is also contained in tf.losses.softmax_cross_entropy." 
+cost = tf.losses.softmax_cross_entropy(
+    onehot_labels=y,
+    logits=pred)
+
 optimizer = tf.train.AdamOptimizer(\
                learning_rate=learning_rate).minimize(cost)
 
@@ -375,7 +383,18 @@ optimizer = tf.train.AdamOptimizer(\
 correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
+#See foot notes 6 Learning TensorFlow: A Guide to Building Deep Learning Systems 
+#(Kindle Locations 516-518)
+#"As of TensorFlow 1.0 this is also contained in tf.metrics.accuracy."
 
+#accuracy, acc_op = tf.metrics.accuracy(labels=tf.argmax(y,1), \
+#                                  predictions=tf.argmax(pred,1))
+
+#However, the above is tricky to use. It also needs the ssess.run 
+#params to be changed
+#See: https://stackoverflow.com/questions/46409626/how-to-properly-use-tf-metrics-accuracy
+# *****ALSO: http://ronny.rest/blog/post_2017_09_11_tf_metrics/
+# 
 # Parameters
 BATCH_SIZE = 50
 display_step = 100
@@ -387,6 +406,7 @@ init = tf.global_variables_initializer()
 # Launch the graph
 with tf.Session() as sess:
     sess.run(init)
+    sess.run(tf.local_variables_initializer())
     iter = 0
     # Keep training until reach max iterations
     while iter  < training_iters:
@@ -404,5 +424,15 @@ with tf.Session() as sess:
     print ("Optimization Finished! After iter: {}".format(iter))
     # Calculate accuracy for 256 mnist test images
     print ("Testing Accuracy:", sess.run(accuracy, \
-                                         feed_dict={x: mnist.test.images[:256], y: mnist.test.labels[:256], keep_prob: 1.}))
-
+                                         feed_dict={x: mnist.test.images[:1000], \
+                                                    y: mnist.test.labels[:1000], \
+                                                    keep_prob: 1.}))
+    #From mnist_cnn
+    X = mnist.test.images.reshape(10, 1000, 784)
+    Y = mnist.test.labels.reshape(10, 1000, 10)
+    import numpy as np
+    test_accuracy = np.mean(
+        [sess.run(accuracy, feed_dict={x: X[i], \
+                                       y: Y[i], \
+                                       keep_prob: 1.0}) for i in range(10)])
+    print("test accuracy: {}".format(test_accuracy))
